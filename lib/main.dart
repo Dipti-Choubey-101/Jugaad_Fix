@@ -258,10 +258,12 @@ class _MainAppState extends State<_MainApp> {
           },
         );
       case 1:
-        return ExploreScreen(
-          onCategorySelected: _onCategorySelected,
-          allJugaads: widget.jugaads,
-        );
+  return ExploreScreen(
+    onCategorySelected: _onCategorySelected,
+    allJugaads: widget.jugaads,
+    onToggleBookmark: widget.onToggleBookmark,
+    onToggleUpvote: widget.onToggleUpvote,
+  );
       case 3:
         return BookmarksScreen(
           bookmarked: bookmarked,

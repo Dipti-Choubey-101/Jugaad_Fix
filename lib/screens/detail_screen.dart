@@ -27,10 +27,12 @@ class _DetailScreenState extends State<DetailScreen> {
   int _ratingCount = 0;
   bool _isLoadingRating = true;
   bool _isSubmittingRating = false;
+  late bool _isBookmarked;
 
   @override
   void initState() {
     super.initState();
+    _isBookmarked = widget.jugaad.isBookmarked;
     _loadRatings();
   }
 
@@ -73,7 +75,8 @@ class _DetailScreenState extends State<DetailScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-              content: Text('Rating save nahi hua, try again!')),
+              content:
+                  Text('Rating save nahi hua, try again!')),
         );
       }
     } finally {
@@ -135,14 +138,17 @@ class _DetailScreenState extends State<DetailScreen> {
         actions: [
           IconButton(
             icon: Icon(
-              widget.jugaad.isBookmarked
+              _isBookmarked
                   ? Icons.bookmark_rounded
                   : Icons.bookmark_outline_rounded,
-              color: widget.jugaad.isBookmarked
+              color: _isBookmarked
                   ? primary
                   : textColor.withOpacity(0.7),
             ),
-            onPressed: widget.onToggleBookmark,
+            onPressed: () {
+              setState(() => _isBookmarked = !_isBookmarked);
+              widget.onToggleBookmark?.call();
+            },
           ),
         ],
       ),
@@ -151,7 +157,6 @@ class _DetailScreenState extends State<DetailScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Category row ──
             Row(
               children: [
                 Text(
@@ -197,10 +202,7 @@ class _DetailScreenState extends State<DetailScreen> {
                   ),
               ],
             ),
-
             const SizedBox(height: 12),
-
-            // ── Title ──
             Text(
               widget.jugaad.title,
               style: GoogleFonts.balooBhai2(
@@ -209,7 +211,6 @@ class _DetailScreenState extends State<DetailScreen> {
                 color: textColor,
               ),
             ),
-
             if (authorLine.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
@@ -220,10 +221,7 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ),
             ],
-
             const SizedBox(height: 20),
-
-            // ── Description box ──
             Container(
               width: double.infinity,
               decoration: BoxDecoration(
@@ -242,10 +240,9 @@ class _DetailScreenState extends State<DetailScreen> {
                 ),
               ),
             ),
-
             const SizedBox(height: 24),
 
-            // ── Average rating display ──
+            // ── Average rating ──
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -286,8 +283,8 @@ class _DetailScreenState extends State<DetailScreen> {
                             if (_averageRating > 0) ...[
                               const SizedBox(width: 8),
                               const Text('⭐',
-                                  style:
-                                      TextStyle(fontSize: 28)),
+                                  style: TextStyle(
+                                      fontSize: 28)),
                             ],
                           ],
                         ),
@@ -300,7 +297,6 @@ class _DetailScreenState extends State<DetailScreen> {
                             ),
                           ),
                         const SizedBox(height: 4),
-                        // Display stars row
                         Row(
                           mainAxisAlignment:
                               MainAxisAlignment.center,
@@ -324,7 +320,7 @@ class _DetailScreenState extends State<DetailScreen> {
 
             const SizedBox(height: 16),
 
-            // ── User rating input ──
+            // ── User rating ──
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
@@ -360,21 +356,15 @@ class _DetailScreenState extends State<DetailScreen> {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
                               horizontal: 4),
-                          child: _isSubmittingRating
-                              ? Icon(
-                                  Icons.star_rounded,
-                                  color: primary.withOpacity(0.3),
-                                  size: 40,
-                                )
-                              : Icon(
-                                  starValue <= _userRating
-                                      ? Icons.star_rounded
-                                      : Icons.star_outline_rounded,
-                                  color: starValue <= _userRating
-                                      ? primary
-                                      : textColor.withOpacity(0.3),
-                                  size: 40,
-                                ),
+                          child: Icon(
+                            starValue <= _userRating
+                                ? Icons.star_rounded
+                                : Icons.star_outline_rounded,
+                            color: starValue <= _userRating
+                                ? primary
+                                : textColor.withOpacity(0.3),
+                            size: 40,
+                          ),
                         ),
                       );
                     }),
@@ -419,9 +409,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   widget.onToggleUpvote?.call();
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(
-                        'Jhakaas! Upvote registered 👍',
-                      ),
+                      content: const Text(
+                          'Jhakaas! Upvote registered 👍'),
                       backgroundColor: primary,
                     ),
                   );
@@ -429,8 +418,8 @@ class _DetailScreenState extends State<DetailScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: primary,
                   foregroundColor: Colors.white,
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -455,8 +444,8 @@ class _DetailScreenState extends State<DetailScreen> {
                   foregroundColor: primary,
                   side: BorderSide(
                       color: primary.withOpacity(0.5)),
-                  padding:
-                      const EdgeInsets.symmetric(vertical: 14),
+                  padding: const EdgeInsets.symmetric(
+                      vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),

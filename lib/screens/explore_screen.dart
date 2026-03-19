@@ -3,31 +3,60 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/sample_data.dart';
 import '../models/jugaad_model.dart';
 import 'detail_screen.dart';
-import 'package:jugaad_fix/models/jugaad_model.dart';
 
-class ExploreScreen extends StatelessWidget {
+class ExploreScreen extends StatefulWidget {
   final Function(String) onCategorySelected;
   final List<Jugaad> allJugaads;
+  final Future<void> Function(Jugaad) onToggleBookmark;
+  final Future<void> Function(Jugaad) onToggleUpvote;
 
   const ExploreScreen({
     super.key,
     required this.onCategorySelected,
     required this.allJugaads,
+    required this.onToggleBookmark,
+    required this.onToggleUpvote,
   });
 
-  Jugaad get _featuredJugaad {
-  final all = List<Jugaad>.from(allJugaads);
-  all.sort((a, b) => b.upvotes.compareTo(a.upvotes));
-  return all.first;
+  @override
+  State<ExploreScreen> createState() => _ExploreScreenState();
 }
+
+class _ExploreScreenState extends State<ExploreScreen> {
+  String? _selectedCategoryKey;
+  String? _selectedCategoryLabel;
+  String? _selectedCategoryEmoji;
+
+  Jugaad get _featuredJugaad {
+    final all = List<Jugaad>.from(widget.allJugaads);
+    all.sort((a, b) => b.upvotes.compareTo(a.upvotes));
+    return all.first;
+  }
+
+  List<Jugaad> get _filteredJugaads {
+    if (_selectedCategoryKey == null) return [];
+    return widget.allJugaads
+        .where((j) => j.categoryKey == _selectedCategoryKey)
+        .toList()
+      ..sort((a, b) => b.upvotes.compareTo(a.upvotes));
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final bgColor = isDark ? const Color(0xFF110806) : const Color(0xFFFFF8F0);
-    final cardColor = isDark ? const Color(0xFF1C110D) : Colors.white;
-    final textColor = isDark ? Colors.white : const Color(0xFF2C1810);
+    final bgColor =
+        isDark ? const Color(0xFF110806) : const Color(0xFFFFF8F0);
+    final cardColor =
+        isDark ? const Color(0xFF1C110D) : Colors.white;
+    final textColor =
+        isDark ? Colors.white : const Color(0xFF2C1810);
+    final primary = const Color(0xFFFF6B00);
     final categories = JugaadCategories.categories;
+
+    if (_selectedCategoryKey != null) {
+      return _buildCategoryJugaads(
+          bgColor, cardColor, textColor, primary);
+    }
 
     return Scaffold(
       backgroundColor: bgColor,
@@ -45,7 +74,7 @@ class ExploreScreen extends StatelessWidget {
                       style: GoogleFonts.balooBhai2(
                         fontSize: 28,
                         fontWeight: FontWeight.w900,
-                        color: const Color(0xFFFF6B00),
+                        color: primary,
                       ),
                     ),
                     Text(
@@ -77,9 +106,9 @@ class ExploreScreen extends StatelessWidget {
                 delegate: SliverChildBuilderDelegate(
                   (context, index) {
                     final cat = categories[index];
-                    final count = allJugaads
-    .where((j) => j.categoryKey == cat['key'])
-    .length;
+                    final count = widget.allJugaads
+                        .where((j) => j.categoryKey == cat['key'])
+                        .length;
                     return _buildCategoryCard(
                       context,
                       cat,
@@ -105,12 +134,245 @@ class ExploreScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturedCard(BuildContext context, Color textColor) {
-    final jugaad = _featuredJugaad;
+  Widget _buildCategoryJugaads(
+    Color bgColor,
+    Color cardColor,
+    Color textColor,
+    Color primary,
+  ) {
+    final jugaads = _filteredJugaads;
+
+    return Scaffold(
+      backgroundColor: bgColor,
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 12, 20, 0),
+              child: Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _selectedCategoryKey = null;
+                        _selectedCategoryLabel = null;
+                        _selectedCategoryEmoji = null;
+                      });
+                    },
+                    icon: Icon(
+                      Icons.arrow_back_rounded,
+                      color: textColor,
+                    ),
+                  ),
+                  Text(
+                    _selectedCategoryEmoji ?? '',
+                    style: const TextStyle(fontSize: 26),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _selectedCategoryLabel ?? '',
+                      style: GoogleFonts.balooBhai2(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: primary,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: primary.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      '${jugaads.length}',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: primary,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: jugaads.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.inbox_rounded,
+                              size: 48,
+                              color: primary.withOpacity(0.4)),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Koi jugaad nahi mila!',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: textColor.withOpacity(0.5),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.fromLTRB(
+                          16, 0, 16, 24),
+                      itemCount: jugaads.length,
+                      itemBuilder: (context, index) {
+                        final jugaad = jugaads[index];
+                        return GestureDetector(
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => DetailScreen(
+                                jugaad: jugaad,
+                                onToggleBookmark: () async {
+                                  await widget
+                                      .onToggleBookmark(jugaad);
+                                  if (mounted) setState(() {});
+                                },
+                                onToggleUpvote: () async {
+                                  await widget
+                                      .onToggleUpvote(jugaad);
+                                  if (mounted) setState(() {});
+                                },
+                              ),
+                            ),
+                          ),
+                          child: Container(
+                            margin:
+                                const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: cardColor,
+                              borderRadius:
+                                  BorderRadius.circular(16),
+                              border: Border.all(
+                                color: primary.withOpacity(0.15),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black
+                                      .withOpacity(0.06),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              crossAxisAlignment:
+                                  CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  jugaad.title,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: textColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  jugaad.shortDescription,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color:
+                                        textColor.withOpacity(0.7),
+                                    height: 1.4,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 10),
+                                Row(
+                                  children: [
+                                    Icon(
+                                      Icons.thumb_up_alt_rounded,
+                                      size: 14,
+                                      color: primary,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      '${jugaad.upvotes} upvotes',
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        color: primary,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const Spacer(),
+                                    if (jugaad.isUserCreated)
+                                      Container(
+                                        padding: const EdgeInsets
+                                            .symmetric(
+                                            horizontal: 8,
+                                            vertical: 3),
+                                        decoration: BoxDecoration(
+                                          color: jugaad.upvotes >= 5
+                                              ? Colors.green
+                                                  .withOpacity(0.12)
+                                              : Colors.orange
+                                                  .withOpacity(0.12),
+                                          borderRadius:
+                                              BorderRadius.circular(
+                                                  20),
+                                        ),
+                                        child: Text(
+                                          jugaad.upvotes >= 5
+                                              ? '✅ Verified'
+                                              : '⏳ Pending',
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight:
+                                                FontWeight.w700,
+                                            color:
+                                                jugaad.upvotes >= 5
+                                                    ? Colors.green
+                                                    : Colors.orange,
+                                          ),
+                                        ),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeaturedCard(
+      BuildContext context, Color textColor) {
+    final featured = _featuredJugaad;
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
-        MaterialPageRoute(builder: (_) => DetailScreen(jugaad: jugaad)),
+        MaterialPageRoute(
+          builder: (_) => DetailScreen(
+            jugaad: featured,
+            onToggleBookmark: () async {
+              await widget.onToggleBookmark(featured);
+              if (mounted) setState(() {});
+            },
+            onToggleUpvote: () async {
+              await widget.onToggleUpvote(featured);
+              if (mounted) setState(() {});
+            },
+          ),
+        ),
       ),
       child: Container(
         width: double.infinity,
@@ -134,8 +396,8 @@ class ExploreScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.25),
                 borderRadius: BorderRadius.circular(20),
@@ -151,7 +413,7 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              jugaad.title,
+              featured.title,
               style: GoogleFonts.balooBhai2(
                 fontSize: 18,
                 fontWeight: FontWeight.w800,
@@ -162,7 +424,7 @@ class ExploreScreen extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              jugaad.shortDescription,
+              featured.shortDescription,
               style: TextStyle(
                 fontSize: 12,
                 color: Colors.white.withOpacity(0.85),
@@ -177,18 +439,18 @@ class ExploreScreen extends StatelessWidget {
                     color: Colors.white, size: 14),
                 const SizedBox(width: 4),
                 Text(
-                  '${jugaad.upvotes} upvotes',
+                  '${featured.upvotes} upvotes',
                   style: const TextStyle(
                       color: Colors.white, fontSize: 12),
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  jugaad.categoryEmoji,
+                  featured.categoryEmoji,
                   style: const TextStyle(fontSize: 14),
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  jugaad.categoryLabel,
+                  featured.categoryLabel,
                   style: const TextStyle(
                       color: Colors.white, fontSize: 12),
                 ),
@@ -208,7 +470,13 @@ class ExploreScreen extends StatelessWidget {
     Color textColor,
   ) {
     return GestureDetector(
-      onTap: () => onCategorySelected(cat['key']!),
+      onTap: () {
+        setState(() {
+          _selectedCategoryKey = cat['key'];
+          _selectedCategoryLabel = cat['label'];
+          _selectedCategoryEmoji = cat['emoji'];
+        });
+      },
       child: Container(
         decoration: BoxDecoration(
           color: cardColor,
