@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # jugaad_fix
 
 A new Flutter project.
@@ -15,3 +16,7 @@ A few resources to get you started if this is your first Flutter project:
 For help getting started with Flutter development, view the
 [online documentation](https://docs.flutter.dev/), which offers tutorials,
 samples, guidance on mobile development, and a full API reference.
+=======
+# Jugaad_Fix
+Desi Indian life hacks app built with Flutter &amp; Firebase
+>>>>>>> 2cd24d4825b172648f68f55360714f96fdf02cb5

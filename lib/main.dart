@@ -528,16 +528,24 @@ class _MainAppState extends State<_MainApp> {
                     },
                   ),
                   Divider(height: 1, color: primary.withOpacity(0.1)),
-                  _settingsTile(
-                    icon: Icons.logout_rounded,
-                    title: 'Logout',
-                    subtitle: 'Sign out of your account',
-                    color: Colors.red,
-                    textColor: textColor,
-                    onTap: () async {
-                      await FirebaseAuth.instance.signOut();
-                    },
-                  ),
+                 _settingsTile(
+  icon: Icons.logout_rounded,
+  title: 'Logout',
+  subtitle: 'Sign out of your account',
+  color: Colors.red,
+  textColor: textColor,
+  onTap: () async {
+    await FirebaseAuth.instance.signOut();
+    if (mounted) {
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(
+          builder: (_) => const LoginScreen(),
+        ),
+        (route) => false,
+      );
+    }
+  },
+),
                 ],
               ),
             ),
